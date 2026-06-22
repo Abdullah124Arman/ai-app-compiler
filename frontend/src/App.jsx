@@ -1,56 +1,28 @@
 import { useState } from 'react'
 import PromptInput from './components/PromptInput'
-import PipelineVisualizer from './components/PipelineVisualizer'
+import ThinkingPanel from './components/ThinkingPanel'
 import OutputViewer from './components/OutputViewer'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export default function App() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [isDone, setIsDone] = useState(false)
-  const [result, setResult] = useState(null)
-  const [pipelineLog, setPipelineLog] = useState([])
-  const [metrics, setMetrics] = useState(null)
-  const [error, setError] = useState(null)
-
-  const simulatePipelineProgress = (stages) => {
-    // Simulate stage-by-stage progress for UX
-    stages.forEach((stage, i) => {
-      setTimeout(() => {
-        setPipelineLog(prev => {
-          const exists = prev.find(s => s.stage === stage.stage)
-          if (exists) return prev
-          return [...prev, { ...stage, status: 'running' }]
-        })
-        setTimeout(() => {
-          setPipelineLog(prev =>
-            prev.map(s => s.stage === stage.stage ? { ...s, status: 'done' } : s)
-          )
-        }, stage.latency_ms || 1500)
-      }, i * 400)
-    })
-  }
+  const [isLoading, setIsLoading]   = useState(false)
+  const [isDone, setIsDone]         = useState(false)
+  const [result, setResult]         = useState(null)
+  const [streamEvents, setStreamEvents] = useState([])
+  const [metrics, setMetrics]       = useState(null)
+  const [error, setError]           = useState(null)
 
   const handleGenerate = async (prompt) => {
     setIsLoading(true)
     setIsDone(false)
     setResult(null)
     setError(null)
-    setPipelineLog([])
+    setStreamEvents([])
     setMetrics(null)
 
-    // Start visual pipeline animation
-    const fakeStages = [
-      { stage: 'intent_extraction' },
-      { stage: 'system_design' },
-      { stage: 'schema_generation' },
-      { stage: 'refinement' },
-      { stage: 'validation_repair' },
-    ]
-    simulatePipelineProgress(fakeStages)
-
     try {
-      const res = await fetch(`${API_BASE}/generate`, {
+      const res = await fetch(`${API_BASE}/generate-stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
@@ -61,18 +33,43 @@ export default function App() {
         throw new Error(err.detail?.error || 'Failed to generate configuration')
       }
 
-      const data = await res.json()
-      setResult(data)
-      setMetrics(data.metrics)
-      // Override pipeline log with real data
-      if (data.metrics?.pipeline_stages) {
-        setPipelineLog(data.metrics.pipeline_stages)
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() // keep incomplete line
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const event = JSON.parse(line.slice(6))
+
+            if (event.type === 'done') {
+              const data = event.result
+              setResult(data)
+              setMetrics(data.metrics)
+              setIsDone(true)
+              setIsLoading(false)
+            } else if (event.type === 'error') {
+              throw new Error(event.error)
+            } else {
+              // stage_start, stage_done, repair — add to stream
+              setStreamEvents(prev => [...prev, event])
+            }
+          } catch (parseErr) {
+            // skip malformed lines
+          }
+        }
       }
-      setIsDone(true)
     } catch (err) {
       setError(err.message)
       setIsDone(false)
-    } finally {
       setIsLoading(false)
     }
   }
@@ -87,7 +84,7 @@ export default function App() {
         </div>
         <div className="header-badge">
           <div className="badge-dot"></div>
-          Powered by Groq · Llama 3.3 70B
+          Powered by Gemini Flash
         </div>
       </header>
 
@@ -114,17 +111,16 @@ export default function App() {
           </div>
         )}
 
-        {/* Pipeline Visualizer — show when loading or done */}
-        {(isLoading || isDone) && (
-          <PipelineVisualizer
-            pipelineLog={pipelineLog}
-            isLoading={isLoading}
+        {/* Thinking Panel — shows live stream while loading and after done */}
+        {(isLoading || isDone) && streamEvents.length > 0 && (
+          <ThinkingPanel
+            events={streamEvents}
             isDone={isDone}
-            metrics={metrics}
+            totalLatency={metrics?.total_latency_ms}
           />
         )}
 
-        {/* Metrics */}
+        {/* Metrics bar */}
         {isDone && metrics && (
           <div className="metrics-bar">
             <div className="metric-card">

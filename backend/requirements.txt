@@ -1,6 +1,7 @@
 fastapi==0.111.0
 uvicorn==0.30.1
-groq==0.9.0
+google-generativeai==0.7.2
+json-repair==0.25.3
 python-dotenv==1.0.1
 pydantic==2.7.4
 jsonschema==4.22.0

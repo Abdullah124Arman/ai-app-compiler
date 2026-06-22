@@ -1,10 +1,25 @@
+# Python
 .env
+.env.*
 __pycache__/
 *.pyc
 *.pyo
 .venv/
 venv/
+*.egg-info/
+
+# Node
 node_modules/
 dist/
+.next/
+
+# OS
 .DS_Store
 *.log
+Thumbs.db
+
+# Local test files
+backend/test.html
+backend/test.jsx
+backend/check.js
+backend/extract.py
