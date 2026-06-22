@@ -4,8 +4,9 @@
 
 A multi-stage AI compiler that converts plain English app descriptions into complete, validated, and immediately runnable applications — with UI, API, database, and auth schemas all generated and cross-validated automatically.
 
-🔗 **Live Demo**: [your-app.vercel.app](https://your-app.vercel.app)  
-🎥 **Loom Video**: [Watch walkthrough](https://loom.com)
+🔗 **Live Demo**: [ai-app-compiler-two.vercel.app](https://ai-app-compiler-two.vercel.app)  
+🚀 **Backend API**: [Railway Production](https://ai-app-compiler-production-0995.up.railway.app)  
+🎥 **Loom Video**: [Watch walkthrough](https://loom.com) *(Add your link here before submitting!)*
 
 ---
 
