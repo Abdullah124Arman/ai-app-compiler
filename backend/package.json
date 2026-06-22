@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "@babel/core": "^8.0.1",
-    "@babel/preset-react": "^8.0.1"
-  }
-}
