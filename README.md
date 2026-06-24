@@ -6,7 +6,7 @@ A multi-stage AI compiler that converts plain English app descriptions into comp
 
 🔗 **Live Demo**: [ai-app-compiler-two.vercel.app](https://ai-app-compiler-two.vercel.app)  
 🚀 **Backend API**: [Railway Production](https://ai-app-compiler-production-0995.up.railway.app)  
-🎥 **Loom Video**: [Watch walkthrough](https://loom.com) *(Add your link here before submitting!)*
+🎥 **Loom Video**: [Watch walkthrough](https://www.loom.com/share/88ac8013938844f7bd5fd010568a2cb7) 
 
 ---
 
